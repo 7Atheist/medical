@@ -1,0 +1,196 @@
+/* =====================================================================
+   自助式老年综合评估对话系统 - 全局样式
+   设计语言：白色为主、简洁、贴近医院、大按钮、高对比度、老年友好
+   文字放大：通过根字体 CSS 变量 --app-font-scale 全局缩放（标准/放大/特大）
+   ===================================================================== */
+
+:root {
+  /* 三档字号比例（方案6.5：标准1.0 / 放大1.6 / 特大2.4）
+     变量定义在 :root，且缩放 class 加在 <html> 上，body 及其子元素均可继承读取 */
+  --app-font-scale: 1;
+  --font-scale-standard: 1;
+  --font-scale-large: 1.6;
+  --font-scale-xlarge: 2.4;
+
+  /* 主色调：医院感的青蓝 + 白色 */
+  --color-primary: #2b7a9c;
+  --color-primary-light: #e6f2f7;
+  --color-primary-dark: #1f5e7a;
+  --color-bg: #f7fafb;
+  --color-card: #ffffff;
+  --color-text: #22333b;
+  --color-text-secondary: #5b6b73;
+  --color-border: #dce7eb;
+  --color-danger: #c0392b;
+  --color-success: #27ae60;
+  --color-warning: #e67e22;
+
+  --radius: 12px;
+  --shadow: 0 2px 12px rgba(31, 94, 122, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #app {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+/* 全局文字放大开关：class 加在 <html> 上，body 与全站随 --app-font-scale 缩放 */
+html.app-scale-standard { --app-font-scale: 1; }
+html.app-scale-large   { --app-font-scale: 1.6; }
+html.app-scale-xlarge  { --app-font-scale: 2.4; }
+
+/* Element Plus 组件字号随根字体三档联动（按钮/输入/单选框/对话框等） */
+html.app-scale-standard {
+  --el-font-size-extra-large: 20px; --el-font-size-large: 18px;
+  --el-font-size-medium: 16px;      --el-font-size-base: 14px;
+  --el-font-size-small: 13px;       --el-font-size-extra-small: 12px;
+}
+html.app-scale-large {
+  --el-font-size-extra-large: 32px; --el-font-size-large: 29px;
+  --el-font-size-medium: 26px;      --el-font-size-base: 22px;
+  --el-font-size-small: 21px;       --el-font-size-extra-small: 19px;
+}
+html.app-scale-xlarge {
+  --el-font-size-extra-large: 48px; --el-font-size-large: 43px;
+  --el-font-size-medium: 38px;      --el-font-size-base: 34px;
+  --el-font-size-small: 31px;       --el-font-size-extra-small: 29px;
+}
+
+body {
+  font-family: "Microsoft YaHei", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: calc(16px * var(--app-font-scale, 1));
+}
+/* 各页面文本统一继承 body 字号，使 em 单位随三档放大联动 */
+#app, .app-page, .app-card, .qa-question, .qa-followup, .app-options {
+  font-size: inherit;
+}
+
+/* 白色卡片容器 */
+.app-card {
+  background: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 28px;
+}
+
+.app-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.app-title {
+  color: var(--color-primary-dark);
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+
+.app-subtitle {
+  color: var(--color-text-secondary);
+  margin: 0 0 24px;
+  font-size: 0.95em;
+}
+
+/* 大按钮（老年友好） */
+.app-btn-primary.el-button {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  font-size: 1.1em;
+  height: 52px;
+  padding: 0 32px;
+}
+.app-btn-primary.el-button:hover {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary-dark);
+}
+
+/* 免责声明 */
+.app-disclaimer {
+  margin-top: 24px;
+  padding: 14px 18px;
+  background: #fff8ec;
+  border: 1px solid #f3dfb4;
+  border-radius: 10px;
+  color: #8a6d3b;
+  font-size: 0.9em;
+  line-height: 1.7;
+}
+
+/* 顶部字号切换栏 */
+.font-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom: 1px solid var(--color-border);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.font-bar .font-btns button {
+  margin-left: 8px;
+  border-radius: 20px;
+  min-width: 64px;
+}
+.font-bar .font-btns button.active {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+
+/* 聊天气泡 */
+.qa-bubble { max-width: 92%; }
+.qa-question {
+  background: var(--color-primary-light);
+  border-left: 4px solid var(--color-primary);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 12px;
+  line-height: 1.8;
+  font-size: 1.05em;
+}
+.qa-followup {
+  background: #fdf6e3;
+  border-left: 4px solid var(--color-warning);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-bottom: 12px;
+  line-height: 1.7;
+}
+
+/* 选项大按钮 */
+.el-radio-group.app-options { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+.app-options .el-radio {
+  height: 46px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 0 16px;
+  margin-right: 0;
+  width: 100%;
+  font-size: 1.05em;
+  transition: all .15s;
+}
+.app-options .el-radio.is-bordered.is-checked { border-color: var(--color-primary); }
+
+/* 反馈提示 */
+.msg-tip { margin: 10px 0; }
+
+/* 后台管理 */
+.admin-layout { display: flex; min-height: 100vh; }
+.admin-side { width: 220px; background: #fff; border-right: 1px solid var(--color-border); padding: 20px 12px; }
+.admin-main { flex: 1; padding: 24px; }
+.admin-side .el-menu { border-right: none; }
+
+/* 适配平板大屏 */
+@media (max-width: 720px) {
+  .app-page { padding: 16px 12px 40px; }
+}

@@ -1,0 +1,41 @@
+/**
+ * 后端 API 封装。
+ */
+import http from './http'
+
+// ---------------- 认证 ----------------
+export const login = (name, idCard) => http.post('/auth/login', { name, idCard })
+
+// ---------------- 评估 ----------------
+export const createTask = (inputMode) => http.post('/assess/create', { inputMode })
+export const listDrafts = () => http.get('/assess/drafts')
+export const listHistory = () => http.get('/assess/history')
+export const getQuestion = (taskId) => http.get(`/assess/${taskId}/question`)
+export const submitAnswer = (taskId, payload) => http.post(`/assess/${taskId}/answer`, payload)
+export const submitAudio = (taskId, questionId, file) => {
+  const fd = new FormData()
+  fd.append('questionId', questionId)
+  fd.append('file', file)
+  return http.post(`/assess/${taskId}/audio`, fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+}
+
+// ---------------- 报告 ----------------
+export const getReportByTask = (taskId) => http.get(`/report/task/${taskId}`)
+export const listReports = () => http.get('/report/list')
+export const reportPdfUrl = (reportId) => `/api/report/${reportId}/pdf?token=${localStorage.getItem('token') || ''}`
+
+// ---------------- 后台管理 ----------------
+export const adminLogin = (adminToken) => localStorage.setItem('adminToken', adminToken)
+export const adminStats = () => http.get('/admin/stats')
+export const adminUsers = (name) => http.get('/admin/users', { params: { name } })
+export const adminScales = () => http.get('/admin/scales')
+export const adminSaveScale = (scale) => http.post('/admin/scales', scale)
+export const adminQuestions = (scaleId) => http.get(`/admin/scales/${scaleId}/questions`)
+export const adminSaveQuestion = (q) => http.post('/admin/questions', q)
+export const adminDictionary = () => http.get('/admin/dictionary')
+export const adminSaveDictionary = (d) => http.post('/admin/dictionary', d)
+export const adminDialogs = () => http.get('/admin/dialog')
+export const adminSaveDialog = (d) => http.post('/admin/dialog', d)
+export const adminParams = () => http.get('/admin/params')
+export const adminUpdateParam = (key, value) => http.put(`/admin/params/${key}`, { value })
+export const adminLogs = () => http.get('/admin/logs')

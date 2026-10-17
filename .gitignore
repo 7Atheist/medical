@@ -1,0 +1,38 @@
+# 依赖与构建产物
+node_modules/
+dist/
+target/
+*.log
+*.zip
+
+# 敏感与临时
+*.pem
+.env
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+*.whl
+
+# IDE 与系统
+.idea/
+.vscode/
+*.iml
+Thumbs.db
+Desktop.ini
+
+# 运行时数据
+reports/
+*.class
+
+# 一键启停脚本（内含本机数据库密码与路径，不上传 GitHub）
+start_all.ps1
+start_all.bat
+stop_all.ps1
+stop_all.bat

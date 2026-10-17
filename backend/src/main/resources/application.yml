@@ -1,0 +1,55 @@
+# =====================================================================
+# 自助式老年综合评估对话系统 - 业务后端配置
+# 生产环境请通过环境变量覆盖敏感配置（见文末注释）
+# =====================================================================
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: assessment-backend
+  # ---------- MySQL 数据源 ----------
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/geriatric_assessment?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:123456}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+  # ---------- JPA ----------
+  jpa:
+    hibernate:
+      ddl-auto: none          # 表结构由 deploy/sql/schema.sql 维护，应用不自动建表
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+  servlet:
+    multipart:
+      max-file-size: 20MB     # 语音音频上传上限
+      max-request-size: 25MB
+
+# ---------- 自定义业务配置 ----------
+app:
+  # AES 加密密钥（32字节，生产必须通过环境变量 AES_KEY 注入并妥善保管）
+  aes-key: ${AES_KEY:geriatric-secret-key-please-change-32b}
+  # AI 与语音服务地址（Python FastAPI）
+  ai-service-url: ${AI_SERVICE_URL:http://localhost:8000}
+  # 会话有效期(小时)
+  session-expire-hours: 72
+  # 报告 PDF 存储目录
+  report-pdf-dir: ${REPORT_PDF_DIR:./reports}
+
+# ---------- 日志 ----------
+logging:
+  level:
+    root: INFO
+    com.geriatric.assessment: INFO
