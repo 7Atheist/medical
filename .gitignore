@@ -30,9 +30,3 @@ Desktop.ini
 # 运行时数据
 reports/
 *.class
-
-# 一键启停脚本（内含本机数据库密码与路径，不上传 GitHub）
-start_all.ps1
-start_all.bat
-stop_all.ps1
-stop_all.bat

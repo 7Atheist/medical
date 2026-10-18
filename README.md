@@ -19,17 +19,17 @@
 | AI/语音/FSM | Python + FastAPI（语义归一化、语音识别/合成、量表状态机） |
 | 大模型 | OpenAI 兼容接口（Qwen/vLLM 私有化等），强约束系统提示词，低温度抑制幻觉 |
 | 存储 | MySQL（敏感字段 AES-GCM 加密）+ 本地/可选 MinIO 存 PDF |
-| 部署 | Docker Compose / Nginx 反向代理 |
+| 部署 | 本地一键启停脚本（`start_all.bat` / `stop_all.bat`） |
 
 ## 二、系统架构
 
 ```
 ┌──────────────────────────────────────────────┐
-│              前端 (Vue3 + Nginx)               │
+│               前端 (Vue3)                │
 │  登录/首页/统一评估/报告/历史/后台管理   │
 │  文字三档放大 · IndexedDB 离线草稿 · 浏览器ASR/TTS │
 └───────────────┬──────────────────────────────┘
-                │ /api (Nginx 反代)
+                │ /api (浏览器直连)
 ┌───────────────▼──────────────────────────────┐
 │        业务后端 (Spring Boot :8080)            │
 │  实名登录(姓名+身份证号) · 画像解析 · 分级评估引擎 │
@@ -70,28 +70,19 @@ medical/
 ├── ai-service/               # Python FastAPI AI/语音/FSM 服务
 │   └── app/{semantic,llm,fsm,asr,tts}
 ├── deploy/
-│   ├── docker-compose.yml    # 一键编排 MySQL+后端+AI+前端
-│   ├── nginx/nginx.conf      # 前端反代配置
-│   └── sql/                  # 建表 + 种子数据
+│   └── sql/                  # 建表 + 种子数据（本地数据库初始化）
 └── README.md
 ```
 
-## 五、快速开始（Docker 一键部署）
+## 五、快速开始（Windows 一键启动）
 
-```bash
-cd deploy
-# 设置数据库密码等环境变量（可选）
-export MYSQL_ROOT_PASSWORD=你的密码
-# 如已接入大模型（默认对接 DeepSeek），设置系统级密钥：
-export LLM_ENABLED=true
-export DEEP_SEEK_API_KEY=sk-你的DeepSeekKey
-docker compose up -d --build
-```
+双击根目录 `start_all.bat` 即可一次性拉起三个服务（已运行的会自动跳过）：
+- 业务后端（Spring Boot）：http://localhost:8080/api/health
+- AI/语音服务（FastAPI）：http://localhost:8000/api/ai/health
+- 前端（Vue3）：http://localhost:5173
 
-- 前端：http://localhost（端口 80）
-- 后端：http://localhost:8080/api/health
-- AI 服务：http://localhost:8000/api/ai/health
-- 首次启动自动建库建表并写入 21 套量表元数据与示例题。
+需要先确认 MySQL(3306) 已启动、且数据库已初始化（首次见 `deploy/sql/` 与 `README` 的数据库初始化说明）。
+停止全部服务双击 `stop_all.bat`。
 
 ## 六、本地开发（Windows）
 
@@ -110,8 +101,8 @@ powershell -ExecutionPolicy Bypass -File stop_all.ps1
 ### 1. 初始化数据库
 
 ```powershell
-cd F:\Study\medical\deploy\sql
-$mysql="F:\JAVA\MYSQL\mysql-8.0.40-winx64\bin\mysql.exe"
+cd deploy\sql
+$mysql="mysql"   # 若 mysql 不在 PATH，改为你本机的完整路径
 & $mysql -uroot -p你的密码 < schema.sql
 & $mysql -uroot -p你的密码 geriatric_assessment < seed.sql
 & $mysql -uroot -p你的密码 geriatric_assessment < seed_questions.sql
@@ -170,7 +161,7 @@ $env:DEEP_SEEK_API_KEY="sk-你的DeepSeekKey"
 ```
 
 ```bash
-# Linux / Docker
+# Linux
 export LLM_ENABLED=true
 export DEEP_SEEK_API_KEY=sk-你的DeepSeekKey
 ```
