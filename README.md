@@ -74,15 +74,41 @@ medical/
 └── README.md
 ```
 
-## 五、快速开始（Windows 一键启动）
+## 五、快速开始
 
-双击根目录 `start_all.bat` 即可一次性拉起三个服务（已运行的会自动跳过）：
+> **首次克隆后**，需先完成「①环境 → ②构建 → ③初始化数据库」，之后每次只需双击 `start_all.bat` 一键启动。
+
+### ① 环境准备（首次）
+- **JDK 17**（建议设置环境变量 `JAVA_HOME`）
+- **Python 3.10+**
+- **MySQL 8.x**（先启动，端口 3306，记住 root 密码）
+- **Node.js 18+**
+
+### ② 构建依赖（首次，三个模块都要）
+```powershell
+cd frontend
+npm install
+cd ..\backend
+mvn clean package -DskipTests
+cd ..\ai-service
+pip install -r requirements.txt
+```
+
+### ③ 初始化数据库（首次）
+```powershell
+powershell -File deploy\sql\init_db.ps1    # 会提示输入 MySQL root 密码；自动建库建表+21量表+99题
+```
+
+### ④ 一键启动（之后每次）
+双击根目录 `start_all.bat`，一次性拉起三个服务并健康检查；停止全部双击 `stop_all.bat`。
 - 业务后端（Spring Boot）：http://localhost:8080/api/health
 - AI/语音服务（FastAPI）：http://localhost:8000/api/ai/health
 - 前端（Vue3）：http://localhost:5173
 
-需要先确认 MySQL(3306) 已启动、且数据库已初始化（首次见 `deploy/sql/` 与 `README` 的数据库初始化说明）。
-停止全部服务双击 `stop_all.bat`。
+### ⑤ 访问与登录
+浏览器打开 http://localhost:5173，用「姓名＋身份证号」登录：
+- 测试男号：张大爷 / `440102195001011231`
+- 测试女号：李奶奶 / `440102195001011258`
 
 ## 六、本地开发（Windows）
 
