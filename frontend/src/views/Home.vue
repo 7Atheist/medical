@@ -3,11 +3,16 @@
     <FontScaleBar :show-logout="true" @logout="doLogout" />
     <div class="app-page">
       <div class="app-card">
-        <div class="app-title" style="font-size:1.5em;">
-          {{ greeting }}，{{ profile?.name || '您好' }}
-        </div>
-        <div class="app-subtitle">
-          您的健康评估助手，随时可暂停、可继续，进度自动保存。
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:6px;">
+          <img src="/assets/patient/illustrations/assistant-robot.png" alt="助手" style="width:60px; height:60px; border-radius:50%; background:var(--color-primary-light); object-fit:cover;" />
+          <div>
+            <div class="app-title" style="font-size:1.5em;">
+              {{ greeting }}，{{ profile?.name || '您好' }}
+            </div>
+            <div class="app-subtitle">
+              您的健康评估助手，随时可暂停、可继续，进度自动保存。
+            </div>
+          </div>
         </div>
 
         <!-- 新评估 -->

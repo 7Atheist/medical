@@ -1,6 +1,9 @@
 <template>
   <div class="app-page" style="display:flex; align-items:center; justify-content:center; min-height:100vh;">
     <div class="app-card" style="max-width:440px; width:100%;">
+      <div style="text-align:center; margin-bottom:6px;">
+        <img src="/assets/patient/illustrations/nurse-welcome.png" alt="健康评估助手" style="width:140px; height:auto; display:block; margin:0 auto;" />
+      </div>
       <div style="text-align:center; margin-bottom:20px;">
         <div class="app-title" style="font-size:1.6em;">老年综合健康评估</div>
         <div class="app-subtitle" style="margin-top:6px;">自助式评估 · 无需注册账号密码</div>

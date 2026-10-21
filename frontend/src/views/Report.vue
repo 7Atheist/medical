@@ -4,11 +4,14 @@
     <div class="app-page">
       <div class="app-card">
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-          <div>
-            <div class="app-title" style="font-size:1.5em;">老年综合评估报告</div>
-            <div class="app-subtitle" style="margin:6px 0 0;">
-              姓名：{{ report?.userName }}　年龄：{{ report?.age }}　性别：{{ report?.genderText }}
-              <span v-if="report?.createdAt">　生成时间：{{ fmt(report.createdAt) }}</span>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <img src="/assets/patient/illustrations/assessment-done.png" alt="评估完成" style="width:56px; height:auto;" />
+            <div>
+              <div class="app-title" style="font-size:1.5em;">老年综合评估报告</div>
+              <div class="app-subtitle" style="margin:6px 0 0;">
+                姓名：{{ report?.userName }}　年龄：{{ report?.age }}　性别：{{ report?.genderText }}
+                <span v-if="report?.createdAt">　生成时间：{{ fmt(report.createdAt) }}</span>
+              </div>
             </div>
           </div>
           <el-button type="primary" size="large" @click="exportPdf">导出PDF</el-button>
