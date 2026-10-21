@@ -3,6 +3,9 @@
     <FontScaleBar :show-logout="true" @logout="doLogout" />
     <div class="app-page">
       <div class="app-card">
+        <!-- 骨架屏：报告加载前 -->
+        <el-skeleton v-if="!report" :rows="8" animated />
+        <template v-else>
         <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
           <div style="display:flex; align-items:center; gap:12px;">
             <img src="/assets/patient/illustrations/assessment-done.png" alt="评估完成" style="width:56px; height:auto;" />
@@ -48,6 +51,7 @@
         </div>
 
         <div class="app-disclaimer">{{ report?.disclaimer || '本评估为自助健康调查工具，结果仅作为个人健康情况参考，不构成医疗诊断。' }}</div>
+        </template>
       </div>
     </div>
   </div>

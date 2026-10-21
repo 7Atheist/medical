@@ -9,9 +9,39 @@
 """
 import json
 import time
+import hashlib
+import os
 import requests
 
 from ..config import settings
+
+# ------------------------------------------------------------------
+# 话术包装本地缓存：同一题干+称呼只调一次 LLM，避免重复付费调用
+# 缓存文件：ai-service/data/wrap_cache.json
+# ------------------------------------------------------------------
+_WRAP_CACHE_FILE = os.path.join(os.path.dirname(__file__), "..", "data", "wrap_cache.json")
+_WRAP_CACHE = {}
+
+def _load_wrap_cache():
+    """启动时加载缓存文件"""
+    global _WRAP_CACHE
+    try:
+        if os.path.exists(_WRAP_CACHE_FILE):
+            with open(_WRAP_CACHE_FILE, "r", encoding="utf-8") as f:
+                _WRAP_CACHE = json.load(f)
+    except Exception:
+        _WRAP_CACHE = {}
+
+def _save_wrap_cache():
+    """写回缓存文件（轻量，题目量不大）"""
+    try:
+        os.makedirs(os.path.dirname(_WRAP_CACHE_FILE), exist_ok=True)
+        with open(_WRAP_CACHE_FILE, "w", encoding="utf-8") as f:
+            json.dump(_WRAP_CACHE, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        print(f"[wrap-cache] 写缓存失败: {e}", flush=True)
+
+_load_wrap_cache()
 
 # =====================================================================
 # AI 系统提示词（核心约束：严格基于量表，规范语言，有温度）
@@ -115,3 +145,73 @@ def call_llm(question_text, options, user_text, profile, history):
 def llm_available() -> bool:
     """LLM 是否可用（用于 /health 探活）"""
     return settings.llm_enabled and bool(settings.llm_api_key)
+
+
+# =====================================================================
+# 题目生活化包装：把医学题干改写成聊天开场白（方案核心体验）
+# =====================================================================
+WRAP_SYSTEM_PROMPT = """你是一位陪长辈聊天的小护士，负责把健康问题包装成拉家常的开场白。
+
+【规则】
+1. 把医学题干改写成一句亲切、生活化的聊天开场白，像晚辈跟长辈唠嗑。
+2. 可以自然引入日常场景：吃饭、睡觉、看电视、散步、天气、天气变化、身体感受。
+3. 不要出现"评估""问卷""量表""体检""题目"这类词，不要像在问话。
+4. 30字以内，口语化，像聊天开头，不是直接提问。
+5. 保持温和、有温度，像"张大爷，最近睡得踏实不？"这种感觉。
+6. 不要给出选项，不要引导选答案，只是开启这个话题。
+"""
+
+
+def wrap_question_life(question_text, options, profile=None):
+    """
+    把医学题干包装成生活化聊天开场白。
+    返回 str（包装后的话术）；LLM 不可用或失败时返回 None（调用方降级显示原题）。
+    带本地缓存：同一题干+称呼只调一次 LLM。
+    """
+    if not settings.llm_enabled or not settings.llm_api_key:
+        return None
+    opts_text = ""
+    if options:
+        opts_text = "\n本题实际要了解的方面：" + "、".join(
+            [f"{o.get('label','')}" for o in options]
+        )
+    profile_text = ""
+    title = ""
+    if profile:
+        title = profile.get("title", "")
+        if title:
+            profile_text = f"\n对方称呼：{title}"
+    # 缓存 key：题干 + 称呼（不同老人称呼不同，话术开头不同）
+    cache_key = hashlib.md5(f"{question_text}|{title}".encode("utf-8")).hexdigest()
+    if cache_key in _WRAP_CACHE:
+        return _WRAP_CACHE[cache_key]
+
+    user_msg = (
+        f"原题干：{question_text}{opts_text}{profile_text}\n"
+        f"请改写成一句生活化的聊天开场白（30字内）。"
+    )
+    headers = {
+        "Authorization": f"Bearer {settings.llm_api_key}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "model": settings.llm_model,
+        "temperature": 0.7,  # 包装话术需要一点变化，比归一化稍高
+        "messages": [
+            {"role": "system", "content": WRAP_SYSTEM_PROMPT},
+            {"role": "user", "content": user_msg},
+        ],
+    }
+    url = settings.llm_base_url.rstrip("/") + "/chat/completions"
+    try:
+        resp = requests.post(url, json=payload, headers=headers, timeout=settings.llm_timeout)
+        resp.raise_for_status()
+        data = resp.json()
+        content = data["choices"][0]["message"]["content"].strip()
+        if content:
+            _WRAP_CACHE[cache_key] = content
+            _save_wrap_cache()
+        return content if content else None
+    except Exception as e:  # noqa: BLE001
+        print(f"[llm-wrap] 包装失败: {e}", flush=True)
+        return None

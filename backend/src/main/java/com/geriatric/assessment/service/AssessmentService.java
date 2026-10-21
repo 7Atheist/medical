@@ -39,6 +39,7 @@ public class AssessmentService {
 
     private final AssessmentTaskRepository taskRepository;
     private final AssessmentAnswerRepository answerRepository;
+    private final AssessmentReportRepository reportRepository;
     private final ScaleRepository scaleRepository;
     private final ScaleQuestionRepository questionRepository;
     private final SemanticDictionaryRepository dictionaryRepository;
@@ -109,7 +110,28 @@ public class AssessmentService {
     }
 
     // ------------------------------------------------------------------
-    // 3. 提交答案（核心）
+    // 3. 删除评估记录（用户主动删除 / 定时清理）
+    // ------------------------------------------------------------------
+
+    /**
+     * 删除某条评估记录（级联删除答案、报告、任务本身）。
+     * 仅允许任务归属者删除。
+     *
+     * @param taskId 任务ID
+     * @param userId 当前登录用户ID（校验归属）
+     */
+    @Transactional
+    public void deleteTask(Long taskId, Long userId) {
+        AssessmentTask task = mustOwn(taskId, userId);
+        // 级联删：答案 → 报告 → 任务
+        answerRepository.deleteByTaskId(taskId);
+        reportRepository.deleteByTaskId(taskId);
+        taskRepository.delete(task);
+        log.info("用户{}删除评估任务{}", userId, taskId);
+    }
+
+    // ------------------------------------------------------------------
+    // 4. 提交答案（核心）
     // ------------------------------------------------------------------
 
     /**
@@ -233,8 +255,12 @@ public class AssessmentService {
             return r;
         }
 
-        // 层1：词典规则匹配
-        OptionMatched dictMatch = matchByDictionary(q, text);
+        // 层1：词典规则匹配（语音来源跳过词典，强制走AI分析，保证口语化回答的准确率）
+        boolean isVoice = "VOICE".equalsIgnoreCase(req.getAnswerSource());
+        OptionMatched dictMatch = null;
+        if (!isVoice) {
+            dictMatch = matchByDictionary(q, text);
+        }
         if (dictMatch != null) {
             r.optionValue = dictMatch.value;
             r.optionText = dictMatch.label;
@@ -446,7 +472,7 @@ public class AssessmentService {
                 // 没有非初筛量表，直接完成
                 return finish(task);
             }
-            // 低风险 → 直接生成简易报告结束
+            // 低风险 → 直接生成简易报告结束（保留原设计：初筛通过不做全量评估）
             return finish(task);
         }
 

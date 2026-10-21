@@ -58,6 +58,13 @@ public class AssessmentController {
         return Result.ok(assessmentService.listHistory(uid(req)));
     }
 
+    /** 删除一条评估记录（级联删除答案、报告） */
+    @DeleteMapping("/{taskId}")
+    public Result<Void> delete(HttpServletRequest req, @PathVariable Long taskId) {
+        assessmentService.deleteTask(taskId, uid(req));
+        return Result.ok(null);
+    }
+
     /** 获取当前题目 */
     @GetMapping("/{taskId}/question")
     public Result<QuestionDTO> question(HttpServletRequest req, @PathVariable Long taskId) {

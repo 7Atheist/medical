@@ -30,3 +30,5 @@ Desktop.ini
 # 运行时数据
 reports/
 *.class
+# AI 话术包装缓存（运行时生成，不提交）
+ai-service/app/data/wrap_cache.json

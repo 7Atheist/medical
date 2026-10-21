@@ -11,7 +11,11 @@ import java.util.Optional;
  */
 public interface AssessmentReportRepository extends JpaRepository<AssessmentReport, Long> {
 
-    Optional<AssessmentReport> findByTaskId(Long taskId);
+    /** 按任务ID查最新报告（可能存在历史重复生成的记录，取最新一条） */
+    Optional<AssessmentReport> findFirstByTaskIdOrderByIdDesc(Long taskId);
 
     List<AssessmentReport> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+    /** 按任务ID删除报告（删除任务时级联清理） */
+    void deleteByTaskId(Long taskId);
 }

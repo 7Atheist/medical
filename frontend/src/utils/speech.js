@@ -50,7 +50,25 @@ export function asrSupported() {
 }
 
 /**
- * 浏览器语音识别，返回识别文本。
+ * 创建一个可手动控制的语音识别实例（点击开始/再点停止）。
+ * 返回 { start, stop, onResult, onError, onEnd }
+ */
+export function createRecognizer() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition
+  if (!SR) return null
+  const rec = new SR()
+  rec.lang = 'zh-CN'
+  rec.interimResults = false
+  rec.maxAlternatives = 1
+  rec.continuous = false   // 识别到一段就停，但由用户手动控制结束
+  rec.onresult = null
+  rec.onerror = null
+  rec.onend = null
+  return rec
+}
+
+/**
+ * 浏览器语音识别，返回识别文本。（一次性自动模式，保留兼容）
  * @returns {Promise<string>} 识别到的文本
  */
 export function recognizeSpeech(timeoutMs = 10000) {

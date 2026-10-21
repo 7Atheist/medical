@@ -111,7 +111,7 @@ public class ReportService {
 
     /** 读取报告DTO（前端预览） */
     public ReportDTO getByTask(Long taskId) {
-        return reportRepository.findByTaskId(taskId)
+        return reportRepository.findFirstByTaskIdOrderByIdDesc(taskId)
                 .map(r -> { ReportDTO dto = readReport(r.getContentJson());
                             if (dto != null) { dto.setReportId(r.getId()); dto.setTaskId(taskId); }
                             return dto; })
@@ -141,12 +141,25 @@ public class ReportService {
         String fileName = "report_" + task.getId() + "_" + System.currentTimeMillis() + ".pdf";
         Path file = dir.resolve(fileName);
 
-        // 中文字体：优先使用 Windows 宋体（simsun.ttc 第0个子字体）
+        // 中文字体：跨平台多路径尝试，找不到才兜底
         BaseFont bf;
-        try {
-            bf = BaseFont.createFont("C:/Windows/Fonts/simsun.ttc,0", BaseFont.IDENTITY_H, BaseFont.NOT_EMBEDDED);
-        } catch (Exception e) {
-            bf = BaseFont.createFont(); // 兜底：标准字体
+        String[] fontCandidates = {
+                "C:/Windows/Fonts/simsun.ttc,0",                                    // Windows 宋体
+                "C:/Windows/Fonts/msyh.ttc,0",                                      // Windows 微软雅黑
+                "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc,0",      // Linux Noto CJK
+                "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc,0",
+                "/System/Library/Fonts/PingFang.ttc,0",                            // macOS 苹方
+        };
+        bf = null;
+        for (String f : fontCandidates) {
+            try {
+                bf = BaseFont.createFont(f, BaseFont.IDENTITY_H, BaseFont.NOT_EMBEDDED);
+                break;
+            } catch (Exception ignore) { /* 试下一个 */ }
+        }
+        if (bf == null) {
+            bf = BaseFont.createFont(); // 最后兜底（可能不支持中文）
+            log.warn("未找到中文字体，PDF 中文可能显示为方块");
         }
         Font titleFont = new Font(bf, 18, Font.BOLD);
         Font normalFont = new Font(bf, 11);

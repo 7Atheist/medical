@@ -217,8 +217,10 @@ public class ScoringService {
             return;
         }
         for (JsonNode lv : levels) {
-            double min = lv.path("min").isMissingNode() ? Double.MIN_VALUE : lv.get("min").asDouble();
-            double max = lv.path("max").isMissingNode() ? Double.MAX_VALUE : lv.get("max").asDouble();
+            // 注意：Double.MIN_VALUE 是最小正数（≈4.9E-324），不是负无穷！
+            // 未配置 min 时应使用负无穷，否则 score=0 时 0 >= MIN_VALUE 为 false 导致区间漏匹配
+            double min = lv.path("min").isMissingNode() ? Double.NEGATIVE_INFINITY : lv.get("min").asDouble();
+            double max = lv.path("max").isMissingNode() ? Double.POSITIVE_INFINITY : lv.get("max").asDouble();
             if (result.score >= min && result.score <= max) {
                 result.risk = lv.path("risk").asInt(0);
                 result.riskLevel = lv.path("level").asText("正常");

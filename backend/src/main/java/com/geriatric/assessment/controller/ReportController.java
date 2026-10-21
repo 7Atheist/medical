@@ -41,7 +41,7 @@ public class ReportController {
     @GetMapping("/task/{taskId}")
     public Result<ReportDTO> byTask(HttpServletRequest req, @PathVariable Long taskId) {
         // 校验归属
-        AssessmentReport r = reportRepository.findByTaskId(taskId)
+        AssessmentReport r = reportRepository.findFirstByTaskIdOrderByIdDesc(taskId)
                 .orElseThrow(() -> new com.geriatric.assessment.common.BizException(404, "报告不存在"));
         if (!r.getUserId().equals(uid(req))) {
             throw new com.geriatric.assessment.common.BizException(403, "无权访问");

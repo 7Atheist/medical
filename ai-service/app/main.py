@@ -114,3 +114,22 @@ def asr_transcribe(req: AsrRequest):
 def tts_synthesize(req: TtsRequest):
     result = tts_service.synthesize(req.text)
     return ok(result)
+
+
+# ---------------- 题目生活化包装（把医学题干改成聊天开场白） ----------------
+class WrapRequest(BaseModel):
+    question_text: str = ""
+    options: List[OptionItem] = []
+    profile: Optional[Dict] = None
+
+
+@app.post("/api/ai/wrap")
+def wrap_question(req: WrapRequest):
+    """把医学题干包装成生活化聊天开场白；LLM 不可用时返回原样，由前端降级显示。"""
+    options = [{"value": o.value, "label": o.label} for o in req.options]
+    wrapped = llm_client.wrap_question_life(req.question_text, options, req.profile)
+    return ok({
+        "original": req.question_text,
+        "wrapped": wrapped or req.question_text,
+        "llm_used": bool(wrapped),
+    })

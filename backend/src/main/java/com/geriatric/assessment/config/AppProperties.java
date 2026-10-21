@@ -25,4 +25,7 @@ public class AppProperties {
 
     /** 报告 PDF 存储目录 */
     private String reportPdfDir = "./reports";
+
+    /** 后台管理令牌（生产通过环境变量 ADMIN_TOKEN 注入，留空则禁止后台访问） */
+    private String adminToken = "";
 }
