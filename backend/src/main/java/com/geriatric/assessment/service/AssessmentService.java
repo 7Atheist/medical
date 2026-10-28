@@ -791,14 +791,19 @@ public class AssessmentService {
         return s == null ? "" : s;
     }
 
-    /** 构造用户画像（注入AI上下文） */
+    /**
+     * 构造用户画像（注入AI上下文）。
+     *
+     * <p>隐私白名单：只传「称谓/姓名/年龄/性别」用于亲切称呼与语气调整，
+     * 禁止发送身份证号、出生日期等敏感身份信息（不带身份证）。</p>
+     */
     private Map<String, Object> profileOf(Long userId) {
         return userRepository.findById(userId).map(u -> {
             Map<String, Object> m = new HashMap<>();
             m.put("name", u.getName());
             m.put("age", u.getAge());
             m.put("gender", u.getGender() != null && u.getGender() == 1 ? "男" : "女");
-            m.put("birth_date", String.valueOf(u.getBirthDate()));
+            m.put("title", titleOf(u));
             return m;
         }).orElse(Map.of());
     }

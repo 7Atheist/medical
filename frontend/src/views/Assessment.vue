@@ -109,6 +109,18 @@ const router = useRouter()
 const user = useUserStore()
 const taskId = route.params.taskId
 
+// 隐私白名单：发给 AI 的画像只含非敏感字段（称谓/姓名/年龄/性别），
+// 禁止把完整 profile（含 idCardMask、birthDate）传给外部模型。
+function safeProfile() {
+  const p = user.profile || {}
+  const out = {}
+  if (p.title) out.title = p.title
+  if (p.name) out.name = p.name
+  if (p.age != null) out.age = p.age
+  if (p.genderText) out.gender = p.genderText
+  return out
+}
+
 const loading = ref(true)
 const question = ref(null)
 const tip = ref('')
@@ -163,7 +175,7 @@ async function loadQuestion() {
     // 先让 AI 把医学题干包装成生活化话术，再显示（无 key 时接口返回原题，自动降级）
     displayQuestionText.value = q.questionText
     try {
-      const res = await wrapQuestion(q.questionText, q.options || [], user.profile || {})
+      const res = await wrapQuestion(q.questionText, q.options || [], safeProfile())
       if (res && res.wrapped) displayQuestionText.value = res.wrapped
     } catch (e) { /* 包装失败兜底用原题 */ }
     readQuestion()
@@ -310,7 +322,7 @@ async function handleResponse(resp) {
     // 先包装下一题再显示
     displayQuestionText.value = resp.question.questionText
     try {
-      const res = await wrapQuestion(resp.question.questionText, resp.question.options || [], user.profile || {})
+      const res = await wrapQuestion(resp.question.questionText, resp.question.options || [], safeProfile())
       if (res && res.wrapped && question.value?.questionId === resp.question.questionId) {
         displayQuestionText.value = res.wrapped
       }
