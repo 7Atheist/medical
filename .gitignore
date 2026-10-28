@@ -32,3 +32,7 @@ reports/
 *.class
 # AI 话术包装缓存（运行时生成，不提交）
 ai-service/app/data/wrap_cache.json
+
+# 测试演示页（调试遗留，不入库）
+asr_test_demo.html
+frontend/public/asr_test_demo.html
