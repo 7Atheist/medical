@@ -449,7 +449,7 @@ OPEN：记录描述，不进行固定选项映射
 
 1. 隐私白名单：AI 调用只带姓名与称谓等非敏感字段，不带身份证。 AssessmentService.profileOf 现在只传 name/age/gender/title（已移除 birth_date）；前端 Assessment.vue 通过 safeProfile() 白名单后传给 AI wrap 接口（不含 idCardMask、birthDate）；client.build_user_prompt 仅拼接 title/name/age/gender。后端会保存答案，部分字段 AES 加密。仍需复核：历史回答 recentHistory 是否包含敏感信息、第三方处理边界与用户告知。
 2. 答案校验仍有缺口。 Python 词典命中分支未统一校验 options 成员；LLM 分支对高置信度结果可能忽略 needs_followup。Java 对非空 AI 选项未强制拒绝越界，某些情况会给缺失置信度默认值。修改归一化时必须补足边界，不能仅增强提示词。
-3. 称谓策略不统一。 原文的“70 岁以上”不符合当前后端 `titleOf`（80 岁阈值）；后端 profileOf 未传 title。应统一配置并贯通字段，本文不把旧文档阈值当作实际逻辑。
+3. 称谓策略已统一。 后端 AssessmentService.titleOf 与 AuthService.buildTitle 现为同一档位：≥80 爷爷/奶奶、≥70 大爷/大妈、≥60 叔叔/阿姨、否则 先生/女士（均做 age 空值防御，统一用"大妈"）。profileOf 已传 title；前端 Home.vue 的 greeting 仅为"敬爱/尊敬/您好"礼貌前缀，不参与称谓数据。docs/API.md 示例已按新口径修正。API 变更前仍需回归验证。
 4. 医学阈值需复核。 规则来源包括 SQL 和 DataInitializer 的默认风险规则；ScoringService 按配置区间匹配。修改前同时检查初始化与计分路径，对重叠区间、缺失回答及初筛分流做边界验证。
 5. 自动清理会删除业务记录。 DraftCleanupScheduler 默认每天 03:00 清理，草稿默认 3 天、已完成记录默认 30 天。医院试用前需明确留存要求；禁止把“有加密”视为可直接采用演示留存策略。
 6. 当前权限形态有限。 管理员共享令牌、内存用户会话、直接暴露的 AI 接口均需结合医院部署要求评估，不能声称已经具备完整角色权限或审计闭环。

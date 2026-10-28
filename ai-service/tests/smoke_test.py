@@ -44,6 +44,42 @@ def test_normalize():
     check("开放题 -> 原样记录", r3["option_text"] == "我画了个圆和指针", str(r3))
 
 
+def test_validation_gaps():
+    """易错点2 修复回归：词典越界校验、LLM高置信尊重needFollowup、缺失置信度"""
+    opts = [{"value": "0", "label": "否"}, {"value": "1", "label": "是"}]
+
+    # 1) 词典命中值不在 options 集合内（配置错误）-> 不得采用越界值，走追问
+    r = engine.normalize("近3个月体重是否下降", "", opts, "瘦了五六斤",
+                         {"age": 72, "gender": "女", "title": "奶奶"}, [],
+                         [{"option_value": "9", "synonyms": "瘦了,下降", "match_type": "CONTAINS"}])
+    check("词典越界值 -> 不采用越界 option", r["option_value"] is None, str(r))
+    check("词典越界值 -> 走追问", r["needs_followup"] is True, str(r))
+
+    # 2) LLM 高置信度但标记 needs_followup -> 必须尊重追问（不直接确定）
+    r2 = engine.normalize("最近睡得好吗", "", opts, "还行吧",
+                          {"age": 70, "gender": "男", "title": "爷爷"}, [], [])
+    # monkey-patch LLM 返回：高置信 + needs_followup=true
+    import app.llm.client as llm_client
+    orig = llm_client.call_llm
+    llm_client.call_llm = lambda *a, **k: {
+        "option_value": "1", "option_text": "是", "confidence": 0.99,
+        "needs_followup": True, "followup_question": "您说的还行，是能自己完成吗？"
+    }
+    try:
+        r3 = engine.normalize("最近睡得好吗", "", opts, "还行吧",
+                              {"age": 70, "gender": "男", "title": "爷爷"}, [], [])
+    finally:
+        llm_client.call_llm = orig
+    check("LLM高置信但需追问 -> 不直接确定", r3["option_value"] is None, str(r3))
+    check("LLM高置信但需追问 -> 转追问", r3["needs_followup"] is True, str(r3))
+
+    # 3) 词典正常命中值仍有效（不误伤正常路径）
+    r4 = engine.normalize("近3个月体重是否下降", "", opts, "瘦了五六斤",
+                          {"age": 72, "gender": "女", "title": "奶奶"}, [],
+                          [{"option_value": "1", "synonyms": "瘦了,下降", "match_type": "CONTAINS"}])
+    check("词典正常命中 -> 仍取 option_value=1", r4["option_value"] == "1", str(r4))
+
+
 def test_fsm():
     questions = [
         {"id": 1, "sort_order": 1, "jump_rule": None},
@@ -66,5 +102,6 @@ def test_fsm():
 
 if __name__ == "__main__":
     test_normalize()
+    test_validation_gaps()
     test_fsm()
     print(f"\n全部通过：{PASS} 项")

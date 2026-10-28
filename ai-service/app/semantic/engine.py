@@ -74,7 +74,12 @@ def _rule_match(question_text, options, user_text, dictionaries):
                 else:  # CONTAINS
                     hit = syn in text
                 if hit:
-                    return d.get("option_value"), _option_label(options, d.get("option_value"))
+                    # 校验命中值必须属于本题 options 集合，防止词典条目越界/与选项不一致
+                    val = str(d.get("option_value"))
+                    if val in _option_value_set(options):
+                        return val, _option_label(options, val)
+                    # 词典配置错误：返回 None 交给下层继续（不强行采用越界值）
+                    return None, None
         return None, None
 
     # 兜底：内置通用词典（仅适用于 是/否 与 频度/程度 类）
@@ -136,9 +141,10 @@ def normalize(question_text, dialog_text, options, user_text, profile, history, 
             result.option_value = str(v)
             result.option_text = _option_label(options, v) or raw.get("option_text")
             result.confidence = conf
-            if conf >= settings.confidence_threshold:
+            # LLM 明确标记需追问时优先尊重（即使高置信度），只有确定且不追问才返回
+            if not bool(raw.get("needs_followup")) and conf >= settings.confidence_threshold:
                 return result.to_dict()
-            # 置信度不足 → 追问
+            # 需追问或置信度不足 → 追问
             result.needs_followup = True
             result.followup_question = raw.get("followup_question") or _default_followup(dialog_text)
             return result.to_dict()

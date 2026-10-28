@@ -87,10 +87,10 @@ public class AuthService {
                 .build();
     }
 
-    /** 根据年龄性别生成称谓（高龄更尊重） */
+    /** 根据年龄性别生成称谓（高龄更尊重；与 AssessmentService.titleOf 保持单一口径） */
     private String buildTitle(SysUser user) {
-        int age = user.getAge();
         boolean male = user.getGender() != null && user.getGender() == 1;
+        int age = user.getAge() == null ? 0 : user.getAge();
         if (age >= 80) {
             return male ? "爷爷" : "奶奶";
         } else if (age >= 70) {

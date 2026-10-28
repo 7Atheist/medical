@@ -112,7 +112,7 @@
   "dialog_text": "关怀话术",
   "options": [{"value":"0","label":"否"}],
   "user_text": "老人回答（语音转写或手输）",
-  "profile": {"title":"爷爷","name":"张大爷","age":76,"gender":1},
+  "profile": {"title":"大爷","name":"张大爷","age":76,"gender":1},
   "history": [{"question":"...","answer":"..."}],
   "dictionaries": [{"option_value":"1","synonyms":"能,行","match_type":"CONTAINS"}]
 }

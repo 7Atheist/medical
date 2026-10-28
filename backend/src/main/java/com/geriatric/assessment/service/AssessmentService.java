@@ -279,17 +279,27 @@ public class AssessmentService {
         if (ai != null) {
             String v = (String) ai.get("option_value");
             boolean needF = Boolean.TRUE.equals(ai.get("needs_followup"));
+            double threshold = paramService.getDouble("confidence_threshold", 0.6);
+            // AI 未给出置信度：不静默给默认值掩盖问题，视为低置信 → 转追问
+            Double conf = ai.get("confidence") instanceof Number
+                    ? ((Number) ai.get("confidence")).doubleValue() : null;
             if (v != null && !v.isBlank()) {
-                r.optionValue = v;
+                // 越界校验：AI 返回的选项值必须属于本题 options，否则强制拒绝并转追问（防止编造/越界）
                 OptionMatched m = matchOptionByValue(q, v);
-                r.optionText = m == null ? (String) ai.get("option_text") : m.label;
-                r.confidence = ai.get("confidence") instanceof Number
-                        ? ((Number) ai.get("confidence")).doubleValue() : 0.8;
-                double threshold = paramService.getDouble("confidence_threshold", 0.6);
-                if (r.confidence < threshold) {
+                if (m == null) {
                     r.needFollowup = true;
                     r.followupPrompt = (String) ai.get("followup_question");
+                    return r;
                 }
+                r.optionValue = m.value;
+                r.optionText = m.label;
+                r.confidence = conf != null ? conf : 0.0;
+                // 尊重 LLM 追问标记；仅当确定、不追问且置信度达标才返回
+                if (!needF && conf != null && conf >= threshold) {
+                    return r;
+                }
+                r.needFollowup = true;
+                r.followupPrompt = (String) ai.get("followup_question");
                 return r;
             }
             if (needF) {
@@ -778,13 +788,23 @@ public class AssessmentService {
                 .replace("{title}", titleOf(u))).orElse(text);
     }
 
+    /**
+     * 称谓策略（与 AuthService.buildTitle 保持完全一致，全项目单一口径）：
+     *  ≥80 爷爷/奶奶；≥70 大爷/大妈；≥60 叔叔/阿姨；否则 先生/女士。
+     *  避免出现"大爷/大娘"这类前后端不一致的称谓。
+     */
     private String titleOf(SysUser u) {
         boolean male = u.getGender() != null && u.getGender() == 1;
         Integer age = u.getAge();
-        if (male) {
-            return age != null && age >= 80 ? "爷爷" : "大爷";
+        int a = age == null ? 0 : age;
+        if (a >= 80) {
+            return male ? "爷爷" : "奶奶";
+        } else if (a >= 70) {
+            return male ? "大爷" : "大妈";
+        } else if (a >= 60) {
+            return male ? "叔叔" : "阿姨";
         }
-        return age != null && age >= 80 ? "奶奶" : "大娘";
+        return male ? "先生" : "女士";
     }
 
     private String safe(String s) {
